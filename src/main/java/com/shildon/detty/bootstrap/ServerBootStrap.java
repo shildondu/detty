@@ -55,7 +55,8 @@ public final class ServerBootStrap {
 	public void start() {
 		ChannelContext channelContext = new ChannelContext();
 		channelContext.setAppContext(appContext);
-		new Thread(new EventLoop(channel, channelListener, channelContext, SelectionKey.OP_ACCEPT));
+		new Thread(new EventLoop(channel, channelListener, channelContext, SelectionKey.OP_ACCEPT))
+			.start();;
 	}
-
+	
 }

@@ -23,7 +23,7 @@ public final class ChannelContext {
 	private CountDownLatch countDownLatch;
 	
 	public void write(byte[] buff) {
-		byteBuffer = ByteBuffer.allocate(buff.length);
+		byteBuffer = ByteBuffer.allocateDirect(buff.length);
 		byteBuffer.put(buff).flip();
 		needWrite = true;
 		triggerWrite();

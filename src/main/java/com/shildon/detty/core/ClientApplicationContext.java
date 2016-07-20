@@ -14,7 +14,7 @@ public final class ClientApplicationContext extends AbstractApplicationContext {
 	public ClientApplicationContext() {
 		reactorThreadCount = 1;
 		taskThreadCount = Runtime.getRuntime().availableProcessors();
-		reactorExecutor = (ThreadPoolExecutor) Executors.newSingleThreadExecutor();
+		reactorExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(reactorThreadCount);
 		taskExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(taskThreadCount);
 		socketChannels = new ArrayList<>();
 		mode = ApplicationMode.CLIENT;

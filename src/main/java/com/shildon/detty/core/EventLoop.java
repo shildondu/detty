@@ -39,6 +39,7 @@ public final class EventLoop implements Runnable {
 			channel.register(selector, ops, channelContext);
 			
 			while (!Thread.interrupted()) {
+				System.out.println(Thread.currentThread().getName() + " unselect");
 				int readyChannels = selector.select();
 				
 				if (0 == readyChannels) {

@@ -1,6 +1,8 @@
 package com.shildon.detty.handler;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +64,13 @@ public final class ChannelHandlerChain {
 			}
 		}
 		
+		ByteBuffer buffer = channelContext.getByteBuffer();
+		
+		if (null != buffer && buffer.hasRemaining()) {
+			SocketChannel sc = channelContext.getChannel();
+			sc.write(buffer);
+		}
+		
 		ApplicationContext appContext = channelContext.getAppContext();
 		
 		if (ApplicationMode.SERVER == appContext.getMode()) {
@@ -78,6 +87,7 @@ public final class ChannelHandlerChain {
 		if (appContext.isNeedInterrupt()) {
 			channelContext.getReactorThread().interrupt();
 			channelContext.getChannel().close();
+			channelContext.getByteBuffer().clear();
 			appContext.getSocketChannels().remove(channelContext.getChannel());
 		}
 	}
