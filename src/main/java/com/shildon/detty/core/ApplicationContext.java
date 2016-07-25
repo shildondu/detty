@@ -1,8 +1,11 @@
 package com.shildon.detty.core;
 
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
+
+import com.shildon.detty.buffer.Pool;
 
 /**
  * 
@@ -20,5 +23,7 @@ public interface ApplicationContext {
 	public List<SocketChannel> getSocketChannels();
 	
 	public ApplicationMode getMode();
+	
+	public Pool<ByteBuffer> getBufferPool();
 
 }

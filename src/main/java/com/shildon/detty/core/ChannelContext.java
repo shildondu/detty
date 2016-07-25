@@ -6,6 +6,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CountDownLatch;
 
+import com.shildon.detty.buffer.Pool;
+
 /**
  * 
  * @author shildon<shildondu@gmail.com>
@@ -23,7 +25,8 @@ public final class ChannelContext {
 	private CountDownLatch countDownLatch;
 	
 	public void write(byte[] buff) {
-		byteBuffer = ByteBuffer.allocateDirect(buff.length);
+		Pool<ByteBuffer> pool = appContext.getBufferPool();
+		byteBuffer = pool.get();
 		byteBuffer.put(buff).flip();
 		needWrite = true;
 		triggerWrite();

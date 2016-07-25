@@ -1,8 +1,11 @@
 package com.shildon.detty.core;
 
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
+
+import com.shildon.detty.buffer.Pool;
 
 /**
  * 
@@ -17,6 +20,7 @@ public abstract class AbstractApplicationContext implements ApplicationContext {
 	protected int taskThreadCount;
 	protected List<SocketChannel> socketChannels;
 	protected ApplicationMode mode;
+	protected Pool<ByteBuffer> pool;
 	
 	// 当正在执行的任务数量达到上限的时候需要终端reactor线程
 	@Override
@@ -42,6 +46,11 @@ public abstract class AbstractApplicationContext implements ApplicationContext {
 	@Override
 	public ApplicationMode getMode() {
 		return this.mode;
+	}
+	
+	@Override
+	public Pool<ByteBuffer> getBufferPool() {
+		return this.pool;
 	}
 
 }

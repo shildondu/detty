@@ -87,7 +87,7 @@ public final class ChannelHandlerChain {
 		if (appContext.isNeedInterrupt()) {
 			channelContext.getReactorThread().interrupt();
 			channelContext.getChannel().close();
-			channelContext.getByteBuffer().clear();
+			appContext.getBufferPool().put(channelContext.getByteBuffer());
 			appContext.getSocketChannels().remove(channelContext.getChannel());
 		}
 	}

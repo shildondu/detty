@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.shildon.detty.buffer.ByteBufferPool;
+
 /**
  * 
  * @author shildon<shildondu@gmail.com>
@@ -18,6 +20,7 @@ public final class ClientApplicationContext extends AbstractApplicationContext {
 		taskExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(taskThreadCount);
 		socketChannels = new ArrayList<>();
 		mode = ApplicationMode.CLIENT;
+		pool = new ByteBufferPool(taskThreadCount, 64);
 	}
 	
 }
