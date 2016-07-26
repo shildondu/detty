@@ -1,12 +1,9 @@
 package com.shildon.detty.core;
 
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CountDownLatch;
-
-import com.shildon.detty.buffer.Pool;
 
 /**
  * 
@@ -19,15 +16,13 @@ public final class ChannelContext {
 	private SocketChannel channel;
 	private Selector selector;
 	private SelectionKey key;
-	private ByteBuffer byteBuffer;
+	private byte[] buff;
 	private boolean needWrite;
 	private Thread reactorThread;
 	private CountDownLatch countDownLatch;
 	
 	public void write(byte[] buff) {
-		Pool<ByteBuffer> pool = appContext.getBufferPool();
-		byteBuffer = pool.get();
-		byteBuffer.put(buff).flip();
+		this.buff = buff;
 		needWrite = true;
 		triggerWrite();
 	}
@@ -76,12 +71,9 @@ public final class ChannelContext {
 	public void setKey(SelectionKey key) {
 		this.key = key;
 	}
-
-	public ByteBuffer getByteBuffer() {
-		return byteBuffer;
-	}
-	public void setByteBuffer(ByteBuffer byteBuffer) {
-		this.byteBuffer = byteBuffer;
+	
+	public byte[] getBuff() {
+		return this.buff;
 	}
 
 	public boolean getNeedWrite() {

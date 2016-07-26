@@ -6,6 +6,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.shildon.detty.buffer.Pool;
 import com.shildon.detty.core.ApplicationContext;
 import com.shildon.detty.core.ApplicationMode;
 import com.shildon.detty.core.ChannelContext;
@@ -64,11 +65,33 @@ public final class ChannelHandlerChain {
 			}
 		}
 		
-		ByteBuffer buffer = channelContext.getByteBuffer();
+		byte[] buff = channelContext.getBuff();
 		
-		if (null != buffer && buffer.hasRemaining()) {
+		if (null != buff && 0 < buff.length) {
+			Pool<ByteBuffer> pool = channelContext.getAppContext().getBufferPool();
+			ByteBuffer buffer = pool.get();
 			SocketChannel sc = channelContext.getChannel();
-			sc.write(buffer);
+			
+			int length = buff.length;
+			int size = buffer.capacity();
+			
+			if (length > size) {
+				int offset = 0;
+
+				do {
+					size = ( length - offset < size ? length - offset : size );
+					buffer.put(buff, offset, size).flip();
+					sc.write(buffer);
+					buffer.clear();
+					offset += size;
+				} while (offset < length);
+
+			} else {
+				buffer.put(buff).flip();
+				sc.write(buffer);
+			}
+
+			pool.put(buffer);
 		}
 		
 		ApplicationContext appContext = channelContext.getAppContext();
@@ -87,7 +110,6 @@ public final class ChannelHandlerChain {
 		if (appContext.isNeedInterrupt()) {
 			channelContext.getReactorThread().interrupt();
 			channelContext.getChannel().close();
-			appContext.getBufferPool().put(channelContext.getByteBuffer());
 			appContext.getSocketChannels().remove(channelContext.getChannel());
 		}
 	}
