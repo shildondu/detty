@@ -1,7 +1,7 @@
 package com.shildon.detty.buffer;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * 
@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class ByteBufferPool implements Pool<ByteBuffer> {
 	
-	private LinkedBlockingQueue<ByteBuffer> byteBuffers;
+	private PriorityBlockingQueue<ByteBuffer> byteBuffers;
 	private int count;
 	private volatile int index;
 	private int bufferSize;
@@ -22,7 +22,13 @@ public class ByteBufferPool implements Pool<ByteBuffer> {
 	private void init(int count, int bufferSize)	{
 		this.count = count;
 		this.bufferSize = bufferSize;
-		byteBuffers = new LinkedBlockingQueue<>(count);
+		byteBuffers = new PriorityBlockingQueue<>(count, (buff0, buff1) -> {
+			if (buff0.array().length < buff0.array().length) {
+				return 1;
+			} else {
+				return -1;
+			}
+		});
 		index = 0;
 	}
 
@@ -44,12 +50,8 @@ public class ByteBufferPool implements Pool<ByteBuffer> {
 
 	@Override
 	public void put(ByteBuffer buffer) {
-		try {
-			buffer.clear();
-			byteBuffers.put(buffer);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		buffer.clear();
+		byteBuffers.put(buffer);
 	}
 
 }

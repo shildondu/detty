@@ -19,13 +19,15 @@ import com.shildon.detty.handler.ChannelHandlerChain;
  * @date Jul 19, 2016
  */
 public final class ServerBootStrap {
-	
+
 	private int port;
 	private ApplicationContext appContext;
 	private ChannelListener channelListener;
 	private ChannelHandlerChain chain;
 	private ServerSocketChannel channel;
-	
+
+	private static final int DEFAULT_PORT = 10101;
+
 	private void init() {
 		appContext = new ServerApplicationContext();
 		chain = new ChannelHandlerChain();
@@ -44,7 +46,7 @@ public final class ServerBootStrap {
 	}
 	
 	public ServerBootStrap() {
-		this(10101);
+		this(DEFAULT_PORT);
 	}
 	
 	public ServerBootStrap addHandler(ChannelHandler channelHandler) {
@@ -56,7 +58,7 @@ public final class ServerBootStrap {
 		ChannelContext channelContext = new ChannelContext();
 		channelContext.setAppContext(appContext);
 		new Thread(new EventLoop(channel, channelListener, channelContext, SelectionKey.OP_ACCEPT))
-			.start();;
+			.start();
 	}
 	
 }

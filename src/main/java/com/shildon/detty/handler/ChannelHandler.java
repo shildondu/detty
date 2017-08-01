@@ -9,12 +9,12 @@ import com.shildon.detty.core.ChannelContext;
  */
 public interface ChannelHandler {
 
-	public boolean handleAccept(ChannelContext channelContext);
+	boolean handleAccept(ChannelContext channelContext);
 	
-	public boolean handleConnect(ChannelContext channelContext);
+	boolean handleConnect(ChannelContext channelContext);
 	
-	public boolean handleIn(ChannelContext channelContext);
+	boolean handleIn(ChannelContext channelContext);
 	
-	public boolean handleOut(ChannelContext channelContext);
+	boolean handleOut(ChannelContext channelContext);
 
 }

@@ -7,8 +7,8 @@ package com.shildon.detty.buffer;
  */
 public interface Pool<T> {
 	
-	public T get();
+	T get();
 	
-	public void put(T obj);
+	void put(T obj);
 
 }

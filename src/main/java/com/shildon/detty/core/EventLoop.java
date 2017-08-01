@@ -35,11 +35,11 @@ public final class EventLoop implements Runnable {
 		try {
 			selector = Selector.open();
 			channel.configureBlocking(false);
-			
+
+			// 把channel的上下文信息attach进去
 			channel.register(selector, ops, channelContext);
 			
 			while (!Thread.interrupted()) {
-				System.out.println(Thread.currentThread().getName() + " unselect");
 				int readyChannels = selector.select();
 				
 				if (0 == readyChannels) {

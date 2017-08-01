@@ -14,16 +14,16 @@ import com.shildon.detty.buffer.Pool;
  */
 public interface ApplicationContext {
 	
-	public boolean isNeedInterrupt();
+	boolean isNeedInterrupt();
 	
-	public ThreadPoolExecutor getReactorExecutor();
+	ThreadPoolExecutor getReactorExecutor();
 	
-	public ThreadPoolExecutor getTaseExecutor();
+	ThreadPoolExecutor getTaskExecutor();
 	
-	public List<SocketChannel> getSocketChannels();
+	List<SocketChannel> getSocketChannels();
 	
-	public ApplicationMode getMode();
+	ApplicationMode getMode();
 	
-	public Pool<ByteBuffer> getBufferPool();
+	Pool<ByteBuffer> getBufferPool();
 
 }

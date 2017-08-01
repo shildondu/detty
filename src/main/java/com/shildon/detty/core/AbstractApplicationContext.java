@@ -14,13 +14,13 @@ import com.shildon.detty.buffer.Pool;
  */
 public abstract class AbstractApplicationContext implements ApplicationContext {
 	
-	protected ThreadPoolExecutor reactorExecutor;
-	protected ThreadPoolExecutor taskExecutor;
-	protected int reactorThreadCount;
-	protected int taskThreadCount;
-	protected List<SocketChannel> socketChannels;
-	protected ApplicationMode mode;
-	protected Pool<ByteBuffer> pool;
+	ThreadPoolExecutor reactorExecutor;
+	ThreadPoolExecutor taskExecutor;
+	int reactorThreadCount;
+	int taskThreadCount;
+	List<SocketChannel> socketChannels;
+	ApplicationMode mode;
+	Pool<ByteBuffer> pool;
 	
 	// 当正在执行的任务数量达到上限的时候需要终端reactor线程
 	@Override
@@ -34,7 +34,7 @@ public abstract class AbstractApplicationContext implements ApplicationContext {
 	}
 	
 	@Override
-	public ThreadPoolExecutor getTaseExecutor() {
+	public ThreadPoolExecutor getTaskExecutor() {
 		return this.taskExecutor;
 	}
 	

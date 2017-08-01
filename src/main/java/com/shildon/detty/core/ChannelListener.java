@@ -41,33 +41,23 @@ public final class ChannelListener {
 	
 	public void doRead(final ChannelContext channelContext) {
 		channelContext.loseInterest(SelectionKey.OP_READ);
-		appContext.getTaseExecutor().submit(new Runnable() {
-			
-			@Override
-			public void run() {
-				try {
-					chain.doHandleRead(channelContext);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		appContext.getTaskExecutor().submit(() -> {
+			try {
+				chain.doHandleRead(channelContext);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-
 		});
 	}
 	
 	public void doWrite(final ChannelContext channelContext) {
 		channelContext.loseInterest(SelectionKey.OP_WRITE);
-		appContext.getTaseExecutor().submit(new Runnable() {
-			
-			@Override
-			public void run() {
-				try {
-					chain.doHandleWrite(channelContext);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		appContext.getTaskExecutor().submit(() -> {
+			try {
+				chain.doHandleWrite(channelContext);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-
 		});
 	}
 

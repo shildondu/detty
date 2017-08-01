@@ -7,6 +7,6 @@ package com.shildon.detty.core;
  */
 public enum ApplicationMode {
 	
-	SERVER, CLIENT;
+	SERVER, CLIENT
 
 }
