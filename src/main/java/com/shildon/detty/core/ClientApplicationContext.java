@@ -20,7 +20,7 @@ public final class ClientApplicationContext extends AbstractApplicationContext {
 		taskExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(taskThreadCount);
 		socketChannels = new ArrayList<>();
 		mode = ApplicationMode.CLIENT;
-		pool = new ByteBufferPool(taskThreadCount, 64);
+		pool = new ByteBufferPool();
 	}
 	
 }

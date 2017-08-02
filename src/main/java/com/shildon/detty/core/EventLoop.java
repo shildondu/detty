@@ -1,5 +1,8 @@
 package com.shildon.detty.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
@@ -21,6 +24,8 @@ public final class EventLoop implements Runnable {
 	private ChannelListener channelListener;
 	private ChannelContext channelContext;
 	private int ops;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(EventLoop.class);
 	
 	public EventLoop(SelectableChannel channel, ChannelListener channelListener,
 			ChannelContext channelContext, int ops) {
@@ -32,6 +37,7 @@ public final class EventLoop implements Runnable {
 
 	@Override
 	public void run() {
+		LOGGER.debug("event loop run: {}", channelContext.getAppContext().getMode().name());
 		try {
 			selector = Selector.open();
 			channel.configureBlocking(false);
@@ -55,23 +61,36 @@ public final class EventLoop implements Runnable {
 					channelContext = (ChannelContext) key.attachment();
 					channelContext.setSelector(selector);
 					channelContext.setKey(key);
-					
-					if (key.isAcceptable()) {
-						ServerSocketChannel ssc = (ServerSocketChannel) channel;
-						SocketChannel sc = ssc.accept();
-						channelContext.setChannel(sc);
-						channelListener.doAccept(channelContext);
-					} else if (key.isConnectable()) {
+
+					// 网络通讯基本步骤：
+					// open（新建socket channel） -> client端：connect（尝试建立连接） -> server端：accept（接受连接） -> read/write -> close
+					if (key.isConnectable()) {
 						channelContext.setReactorThread(Thread.currentThread());
 						SocketChannel sc = (SocketChannel) channel;
-						
+
+						LOGGER.debug("[connectable]");
+
 						if (sc.finishConnect()) {
 							channelListener.doConnect(channelContext);
 						}
+					} else if (key.isAcceptable()) {
+						ServerSocketChannel ssc = (ServerSocketChannel) channel;
+						SocketChannel sc = ssc.accept();
+						channelContext.setChannel(sc);
+
+						LOGGER.debug("[acceptable], client ip: {}", sc.getLocalAddress());
+
+						channelListener.doAccept(channelContext);
 					} else if (key.isReadable()) {
+
+						LOGGER.debug("[readable]");
+
 						channelContext.setReactorThread(Thread.currentThread());
 						channelListener.doRead(channelContext);
-					} else if (key.isWritable()) {
+					} else if (key.isWritable()) { // 注意如果对write事件感兴趣，当channel准备好写的时候就会一直触发
+
+						LOGGER.debug("[writable]");
+
 						channelContext.setReactorThread(Thread.currentThread());
 						channelListener.doWrite(channelContext);
 					}
@@ -80,12 +99,12 @@ public final class EventLoop implements Runnable {
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.error("[run] error", e);
 		} finally {
 			try {
 				selector.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOGGER.error("[run] error", e);
 			}
 		}
 	}

@@ -20,7 +20,7 @@ public final class ServerApplicationContext extends AbstractApplicationContext {
 		taskExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(taskThreadCount);
 		socketChannels = new ArrayList<>();
 		mode = ApplicationMode.SERVER;
-		pool = new ByteBufferPool(taskThreadCount, 64);
+		pool = new ByteBufferPool();
 	}
 
 }

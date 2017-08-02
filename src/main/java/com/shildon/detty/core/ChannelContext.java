@@ -1,5 +1,8 @@
 package com.shildon.detty.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -20,10 +23,13 @@ public final class ChannelContext {
 	private boolean needWrite;
 	private Thread reactorThread;
 	private CountDownLatch countDownLatch;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ChannelContext.class);
 	
 	public void write(byte[] buff) {
 		this.buff = buff;
 		needWrite = true;
+		// 触发对write事件的监听
 		triggerWrite();
 	}
 	
@@ -41,12 +47,16 @@ public final class ChannelContext {
 	
 	public void loseInterest(int lops) {
 		int ops = key.interestOps();
+
+		LOGGER.debug("[loseInterest] ops: {}, lops: {}", ops, lops);
+
 		key.interestOps(ops & (~lops));
 	}
 
 	public ApplicationContext getAppContext() {
 		return appContext;
 	}
+
 	public void setAppContext(ApplicationContext appContext) {
 		this.appContext = appContext;
 	}
@@ -54,6 +64,7 @@ public final class ChannelContext {
 	public SocketChannel getChannel() {
 		return channel;
 	}
+
 	public void setChannel(SocketChannel channel) {
 		this.channel = channel;
 	}
@@ -61,6 +72,7 @@ public final class ChannelContext {
 	public Selector getSelector() {
 		return selector;
 	}
+
 	public void setSelector(Selector selector) {
 		this.selector = selector;
 	}
@@ -68,17 +80,15 @@ public final class ChannelContext {
 	public SelectionKey getKey() {
 		return key;
 	}
+
 	public void setKey(SelectionKey key) {
 		this.key = key;
 	}
 	
-	public byte[] getBuff() {
-		return this.buff;
-	}
-
 	public boolean getNeedWrite() {
 		return needWrite;
 	}
+
 	public void setNeedWrite(boolean needWrite) {
 		this.needWrite = needWrite;
 	}
@@ -86,6 +96,7 @@ public final class ChannelContext {
 	public Thread getReactorThread() {
 		return reactorThread;
 	}
+
 	public void setReactorThread(Thread reactorThread) {
 		this.reactorThread = reactorThread;
 	}
@@ -93,8 +104,16 @@ public final class ChannelContext {
 	public CountDownLatch getCountDownLatch() {
 		return countDownLatch;
 	}
+
 	public void setCountDownLatch(CountDownLatch countDownLatch) {
 		this.countDownLatch = countDownLatch;
 	}
 
+	public byte[] getBuff() {
+		return this.buff;
+	}
+
+	public void setBuff(byte[] buff) {
+		this.buff = buff;
+	}
 }

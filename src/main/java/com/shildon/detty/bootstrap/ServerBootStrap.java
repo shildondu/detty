@@ -12,6 +12,8 @@ import com.shildon.detty.core.EventLoop;
 import com.shildon.detty.core.ServerApplicationContext;
 import com.shildon.detty.handler.ChannelHandler;
 import com.shildon.detty.handler.ChannelHandlerChain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -28,6 +30,8 @@ public final class ServerBootStrap {
 
 	private static final int DEFAULT_PORT = 10101;
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerBootStrap.class);
+
 	private void init() {
 		appContext = new ServerApplicationContext();
 		chain = new ChannelHandlerChain();
@@ -35,8 +39,9 @@ public final class ServerBootStrap {
 		try {
 			channel = ServerSocketChannel.open();
 			channel.bind(new InetSocketAddress(port));
+			LOGGER.debug("init server successfully, port: {}", port);
 		} catch (IOException e) {
-			e.printStackTrace();
+			LOGGER.error("[init] error, port: {}", port, e);
 		}
 	}
 	

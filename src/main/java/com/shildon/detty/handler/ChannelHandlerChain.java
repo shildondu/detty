@@ -10,6 +10,8 @@ import com.shildon.detty.buffer.Pool;
 import com.shildon.detty.core.ApplicationContext;
 import com.shildon.detty.core.ApplicationMode;
 import com.shildon.detty.core.ChannelContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -20,6 +22,8 @@ public final class ChannelHandlerChain {
 	
 	private List<ChannelHandler> channelHandlers = new ArrayList<>();
 	private int index;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ChannelHandlerChain.class);
 	
 	public ChannelHandlerChain add(ChannelHandler channelHandler) {
 		channelHandlers.add(channelHandler);
@@ -50,7 +54,8 @@ public final class ChannelHandlerChain {
 				break;
 			}
 		}
-		
+
+		// 不需要写的话，判断reactor线程是否满了，如果满了就close当前channel
 		if (!channelContext.getNeedWrite()) {
 			postHandle(channelContext);
 		}
@@ -58,7 +63,7 @@ public final class ChannelHandlerChain {
 		return true;
 	}
 	
-	public boolean doHandleWrite(ChannelContext channelContext) throws IOException {
+	public boolean doHandleWrite(ChannelContext channelContext) throws Exception {
 		for (index = channelHandlers.size() - 1; index >= 0; index--) {
 			if (!channelHandlers.get(index).handleOut(channelContext)) {
 				break;
@@ -105,7 +110,7 @@ public final class ChannelHandlerChain {
 		return true;
 	}
 	
-	public void postHandle(ChannelContext channelContext) throws IOException {
+	private void postHandle(ChannelContext channelContext) throws IOException {
 		ApplicationContext appContext = channelContext.getAppContext();
 		if (appContext.isNeedInterrupt()) {
 			channelContext.getReactorThread().interrupt();
