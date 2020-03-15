@@ -59,10 +59,10 @@ public final class ServerBootStrap {
 		return this;
 	}
 	
-	public void start() {
+	public void start() throws IOException {
 		ChannelContext channelContext = new ChannelContext();
 		channelContext.setAppContext(appContext);
-		new Thread(new EventLoop(channel, channelListener, channelContext, SelectionKey.OP_ACCEPT))
+		new Thread(new EventLoop())
 			.start();
 	}
 	

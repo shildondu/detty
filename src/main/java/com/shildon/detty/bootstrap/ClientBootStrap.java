@@ -66,13 +66,12 @@ public final class ClientBootStrap {
 		return this;
 	}
 	
-	public ClientBootStrap start() {
+	public ClientBootStrap start() throws IOException {
 		channelContext.setChannel(channel);
 		channelContext.setAppContext(appContext);
 		channelContext.setCountDownLatch(countDownLatch);
 		channelContext.setReactorThread(Thread.currentThread());
-		appContext.getReactorExecutor().submit(new EventLoop(channel,
-				channelListener, channelContext, SelectionKey.OP_CONNECT));
+		appContext.getReactorExecutor().submit(new EventLoop());
 		return this;
 	}
 	

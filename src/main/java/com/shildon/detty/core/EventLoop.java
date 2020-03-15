@@ -4,109 +4,119 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.channels.SelectableChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.net.InetSocketAddress;
+import java.nio.channels.*;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
- * 
- * @author shildon<shildondu@gmail.com>
- * @date Jul 19, 2016
+ * @author shildon
  */
 public final class EventLoop implements Runnable {
 
-	private Selector selector;
-	private SelectableChannel channel;
-	private ChannelListener channelListener;
-	private ChannelContext channelContext;
-	private int ops;
+    private Selector selector;
+    private List<SelectableChannel> channels = new ArrayList<>();
+    private ChannelListener channelListener = new ChannelListener();
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(EventLoop.class);
-	
-	public EventLoop(SelectableChannel channel, ChannelListener channelListener,
-			ChannelContext channelContext, int ops) {
-		this.channel = channel;
-		this.channelListener = channelListener;
-		this.channelContext = channelContext;
-		this.ops = ops;
-	}
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventLoop.class);
 
-	@Override
-	public void run() {
-		LOGGER.debug("event loop run: {}", channelContext.getAppContext().getMode().name());
-		try {
-			selector = Selector.open();
-			channel.configureBlocking(false);
+    public EventLoop() throws IOException {
+        this.selector = Selector.open();
+    }
 
-			// 把channel的上下文信息attach进去
-			channel.register(selector, ops, channelContext);
-			
-			while (!Thread.interrupted()) {
-				int readyChannels = selector.select();
-				
-				if (0 == readyChannels) {
-					continue;
-				}
+    public void register(SelectableChannel channel, ChannelSession channelSession) throws IOException {
+        channel.configureBlocking(false);
+        if (channel instanceof ServerSocketChannel) {
+            // todo need attach something to it
+            channel.register(selector, SelectionKey.OP_ACCEPT, channelSession);
+        } else if (channel instanceof SocketChannel) {
+            // todo need attach something to it
+            channel.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ | SelectionKey.OP_WRITE, channelSession);
+        } else {
+            throw new RuntimeException("not supported");
+        }
 
-				Set<SelectionKey> keys = selector.selectedKeys();
-				Iterator<SelectionKey> keyIterator = keys.iterator();
-				
-				while (keyIterator.hasNext()) {
-					SelectionKey key = keyIterator.next();
-					channel = key.channel();
-					channelContext = (ChannelContext) key.attachment();
-					channelContext.setSelector(selector);
-					channelContext.setKey(key);
+        this.channels.add(channel);
+    }
 
-					// 网络通讯基本步骤：
-					// open（新建socket channel） -> client端：connect（尝试建立连接） -> server端：accept（接受连接） -> read/write -> close
-					if (key.isConnectable()) {
-						channelContext.setReactorThread(Thread.currentThread());
-						SocketChannel sc = (SocketChannel) channel;
+    @Override
+    public void run() {
+        try {
+            while (!Thread.interrupted()) {
+                int readyKeysCount = selector.select();
 
-						LOGGER.debug("[connectable]");
+                LOGGER.debug("event loop run, the count of read keys count: {}", readyKeysCount);
 
-						if (sc.finishConnect()) {
-							channelListener.doConnect(channelContext);
-						}
-					} else if (key.isAcceptable()) {
-						ServerSocketChannel ssc = (ServerSocketChannel) channel;
-						SocketChannel sc = ssc.accept();
-						channelContext.setChannel(sc);
+                if (0 == readyKeysCount) {
+                    continue;
+                }
 
-						LOGGER.debug("[acceptable], client ip: {}", sc.getLocalAddress());
+                Set<SelectionKey> keys = selector.selectedKeys();
+                Iterator<SelectionKey> keyIterator = keys.iterator();
 
-						channelListener.doAccept(channelContext);
-					} else if (key.isReadable()) {
+                while (keyIterator.hasNext()) {
+                    SelectionKey key = keyIterator.next();
+                    SelectableChannel hasEventChannel = key.channel();
 
-						LOGGER.debug("[readable]");
+                    if (key.isConnectable()) {
+                        SocketChannel channel = (SocketChannel) hasEventChannel;
+                        ChannelSession channelSession = (ChannelSession) key.attachment();
 
-						channelContext.setReactorThread(Thread.currentThread());
-						channelListener.doRead(channelContext);
-					} else if (key.isWritable()) { // 注意如果对write事件感兴趣，当channel准备好写的时候就会一直触发
+                        LOGGER.debug("the channel is connectable: {}", channel);
 
-						LOGGER.debug("[writable]");
+                        channelListener.doOnConnectable(channelSession);
+                    } else if (key.isAcceptable()) {
+                        ServerSocketChannel acceptableServerChannel = (ServerSocketChannel) hasEventChannel;
+                        ChannelSession serverChannelSession = (ChannelSession) key.attachment();
 
-						channelContext.setReactorThread(Thread.currentThread());
-						channelListener.doWrite(channelContext);
-					}
-					
-					keyIterator.remove();
-				}
-			}
-		} catch (IOException e) {
-			LOGGER.error("[run] error", e);
-		} finally {
-			try {
-				selector.close();
-			} catch (IOException e) {
-				LOGGER.error("[run] error", e);
-			}
-		}
-	}
-	
+                        SocketChannel channel = acceptableServerChannel.accept();
+                        ChannelSession channelSession = new ChannelSession()
+                                .setServerSocketChannel(acceptableServerChannel)
+                                .setSocketChannel(channel);
+                        this.register(channel, channelSession);
+
+                        LOGGER.debug("accept a channel: {}", channel);
+
+                        serverChannelSession.setSocketChannel(channel);
+                        this.channelListener.doOnAcceptable(serverChannelSession);
+                    } else if (key.isReadable()) {
+                        SocketChannel channel = (SocketChannel) hasEventChannel;
+                        ChannelSession channelSession = (ChannelSession) key.attachment();
+
+                        LOGGER.debug("the channel is readable: {}", channel);
+
+                        channelListener.doOnReadable(channelSession);
+                    } else if (key.isWritable()) {
+                        SocketChannel channel = (SocketChannel) hasEventChannel;
+                        ChannelSession channelSession = (ChannelSession) key.attachment();
+
+                        LOGGER.debug("the channel is writable: {}", channel);
+
+                        channelListener.doOnWritable(channelSession);
+                    }
+
+                    keyIterator.remove();
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("error occurred in event loop", e);
+        } finally {
+            try {
+                selector.close();
+            } catch (IOException e) {
+                LOGGER.error("close selector error", e);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.bind(new InetSocketAddress(10101));
+        EventLoop eventLoop = new EventLoop();
+        eventLoop.register(serverSocketChannel, new ChannelSession().setServerSocketChannel(serverSocketChannel));
+        new Thread(eventLoop).start();
+    }
+
 }
